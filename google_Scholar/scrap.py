@@ -1,40 +1,91 @@
 import bs4
-from urllib.request import urlopen as uReq
+import urllib
 from bs4 import BeautifulSoup as soup 
+from selenium import webdriver
 
-my_url = 'https://scholar.google.com.au/citations?user=m8dFEawAAAAJ&hl=en'
-uClient = uReq(my_url) # opening a connection
-page_html = uClient.read()
-uClient.close()
+import re
 
-page_soup = soup(page_html, "html.parser")
+title_list = []
+citation_list =[]
+coAuth_list = []
+link_list = []
 
-aTag = page_soup.findAll('td', {'class': 'gsc_rsb_std'})
+class Scraper():
 
-Titles = page_soup.findAll('td', {'class': 'gsc_a_t'})
+	def __init__(self, url, maxP):
 
-Citations = page_soup.findAll('td', {'class': 'gsc_a_c'})
+		self.url= url
 
-Years = page_soup.findAll('td', {'class': 'gsc_a_y'})
+		self.maxP = maxP
 
-for title in Titles:
-	coAuth = title.findAll('div', {'class': 'gs_gray'})
-	coAuths = coAuth[0].text
-	Title = title.a.text
-	print (coAuths)
-	print (Title)
+	def f(self):
 
-for citations in Citations:
-	citation = citations.text
-	print (citation)
+		for i in range(0,1000,100):
+			if (self.maxP<i):
+
+				pageSize=i
+
+		for j in range(0, pageSize, 100):
+
+			S_url=self.url + "&cstart=" + str(j) +"&pagesize=100"
+
+			
+
+			my_url = urllib.urlopen(S_url)
+
+			page_html = my_url.read()
+
+			my_url.close()
+
+			page_soup = soup(page_html, "lxml")
+
+			aTag = page_soup.findAll('td', {'class': 'gsc_rsb_std'})
+
+			Titles = page_soup.findAll('td', {'class': 'gsc_a_t'})
+
+			Citations_soup = page_soup.findAll('td', {'class': 'gsc_a_c'})
+
+			Years = page_soup.findAll('td', {'class': 'gsc_a_y'})
+
+			info_page = page_soup.findAll('a', {'class' : 'gsc_a_at'})
+
+			driver =  webdriver.Firefox()
+
+			for author in info_page:
+
+				Author_names_link = author["data-href"]
+
+				user=Author_names_link[53:65]
+
+				n_input=Author_names_link[-12:]
+
+				n_author_url="https://scholar.google.com.au/citations?user="+user+"&hl=en#d=gs_md_cita-d&u=%2Fcitations%3Fview_op%3Dview_citation%26hl%3Den%26user%3D"+user+"%26citation_for_view%3D"+user+"%3A"+n_input+"%26tzom%3D-330"
+
+				driver.implicitly_wait(30)
+
+				driver.get(n_author_url)
+
+				title= driver.find_elements_by_xpath('//div[@class="gsc_vcd_value"]')
+
+				page_element = title[0].text
+
+				coAuths.append(len(page_element.split(',')))
+
+			for title in Titles:
+				Title = title.a.text
+				title_list.append(Title)
+			
+			for c in Citations_soup:
+				citation = c.text
+				Citations.append(citation)
+
+		normalized_papers = 0
+
+		for element in range(title_list):
+			n_papers +=1/coAuth_list[element]
+			n_citations.append(Citations/coAuths)
+			T_citations = sum(Citations)/sum(coAuths)
 
 
-for year in Years:
-	Year= year.text
-
-print (len(Years))
-print (len(Citations))
-print (coAuths)
-total= aTag[0].text
-since2014= aTag[1].text
-
+		return (T_citations, n_papers, n_citations)
+		

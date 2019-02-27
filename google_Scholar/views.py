@@ -22,8 +22,9 @@ class IndexView(TemplateView):
 	def post(self, request):
 		form = IndexForm(request.POST)
 		if form.is_valid():
-			text = form.cleaned_data['scholar_url']
-			scholar_data = Scraper(text)
+			text1 = form.cleaned_data['scholar_url']
+			text2 = form.cleaned_data['max_approx_publications']
+			scholar_data = Scraper(text1, text2)
 			b= scholar_data.f
 			args = {'b': b}
 			return render(request, 'google_Scholar/metrics.html', args)
